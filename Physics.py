@@ -21,11 +21,6 @@ TABLE_LENGTH = phylib.PHYLIB_TABLE_LENGTH
 TABLE_WIDTH = phylib.PHYLIB_TABLE_WIDTH
 MAX_OBJECTS = phylib.PHYLIB_MAX_OBJECTS
 DRAG = phylib.PHYLIB_DRAG
-MAX_TIME = phylib.PHYLIB_MAX_TIME
-MAX_OBJECTS = phylib.PHYLIB_MAX_OBJECTS
-
-#Added
-SIM_RATE = phylib.PHYLIB_SIM_RATE
 
 #A3 additions
 FRAME_INTERVAL = 0.01
@@ -518,10 +513,6 @@ class Database:
         # Retrieve the last inserted TABLEID
         table_id = self.cursor.lastrowid
 
-
-        #if (table_id == 1):
-        #    print(table.__str__())
-
         # Insert data into BALL for each ball in the table
         for ball in table:
             if isinstance(ball, StillBall):
@@ -551,6 +542,8 @@ class Database:
 
     def readGame(self, gameID):
         
+        print("entered read game");
+
         game = None
         self.cursor = self.conn.cursor()
 
@@ -572,13 +565,22 @@ class Database:
         player_id1,player_name1 = player_result[0]
         player_id2, player_name2 = player_result[1]
 
+
         game_name = game_name_result[0]
+
+        #print("Game ID:", gameID)
+        #print("Game Name:", game_name)
+        #print("Player 1 Name:", player_id1)
+        #print("Player 2 Name:", player_id2)
+
+
+        game_info = (gameID, game_name, player_id1, player_id2)
         # Initialize a Game object with the retrieved game name
-        game = Game(game_name, player_name1, player_name2)
+        #game = Game(gameID=gameID, gameName=game_name, player1Name=player_name1, player2Name=player_name2)
 
         self.cursor.close()
         self.conn.commit()
-        return game
+        return game_info
 
 
     def writeGame(self, game_id, gName, p1Name, p2Name):
@@ -641,7 +643,8 @@ class Game:
         self.dBase.createDB()
 
         if gameID is not None and gameName is None and player1Name is None and player2Name is None:
-            game = self.dBase.readGame(self, gameID)
+            #game = self.dBase.readGame(self, gameID)
+            self = self.dBase.readGame(gameID)
         
         elif gameID is None and isinstance(gameName, str) and isinstance(player1Name, str) and isinstance(player2Name, str):
             self.gameName = gameName
@@ -654,6 +657,7 @@ class Game:
     def shoot(self, gameName, playerName, table, xvel, yvel):
         # Call helper method in Database class to add new entry to Shot table
         # Determine playerID from playerName
+        print("Entered shoot heeh")
 
         # Retrieve the cue ball from the table
         cue_ball = table.cueBall()
@@ -688,8 +692,7 @@ class Game:
         cue_ball.obj.rolling_ball.acc.y = yacc
 
         #next_table = Table()
-
-        #num = 0;
+        num = 0;
 
         # Save the table to the database
         table_id = self.dBase.writeTable(table)
@@ -697,6 +700,12 @@ class Game:
         # Record the table in the TableShot table
         self.dBase.cursor = self.dBase.conn.cursor()
         self.dBase.cursor.execute("INSERT INTO TableShot (TABLEID, SHOTID) VALUES (?, ?)", (table_id, shot_id))
+
+        # Create HTML content for animation
+        html_content = "<html>\n<head>\n<title>Animation</title>\n</head>\n<body>\n"
+
+        with open('animation.html', 'w') as output_file:
+            output_file.write(html_content)
 
         # Start a loop that loops until the segment method returns None
         while True:
@@ -714,10 +723,11 @@ class Game:
             segment_length = endTime - startTime
             
             # Determine the number of frames in the segment
-            num_frames = int(segment_length / FRAME_INTERVAL)
+            num_frames = math.floor(segment_length / FRAME_INTERVAL)
             
             # Loop over each frame
             for i in range(num_frames):
+
                 # Calculate the time for the next frame
                 frame_time =  i * FRAME_INTERVAL
                 
@@ -736,15 +746,24 @@ class Game:
                 # Record the table in the TableShot table
                 self.dBase.cursor = self.dBase.conn.cursor()
                 self.dBase.cursor.execute("INSERT INTO TableShot (TABLEID, SHOTID) VALUES (?, ?)", (table_id, shot_id))
+
+                html_content += next_table.svg()
+
                 
             table = tabSegment
             
             self.dBase.conn.commit()
 
-            #num += num_frames
-
+            num += num_frames
             # Get the next segment
             #print(num_frames)
-            #print(num)
+            print(num)
+        # Finish the HTML content
+            
+        with open('animation.html', 'w') as output_file:
+            output_file.write(html_content())
+        
+        html_content += "</body>\n</html>"
+        
         
         self.dBase.cursor.close()

@@ -372,6 +372,8 @@ void phylib_roll( phylib_object *new, phylib_object *old, double time ){
     //Set new ball acceleration
     new->obj.rolling_ball.acc = old->obj.rolling_ball.acc;
 
+    //new->obj.rolling_ball.number = old->obj.rolling_ball.number;
+
     //printf("\n\nOld x velocity: %10.5lf and New x velocity: %10.5lf\n", old->obj.rolling_ball.vel.x ,new->obj.rolling_ball.vel.x);
     //printf("New position x: %10.5lf, New position y: %10.5lf\n", new->obj.rolling_ball.pos.x, new->obj.rolling_ball.pos.y);
     //printf("Acceleration x: %10.5lf\n" ,new->obj.rolling_ball.acc.x );

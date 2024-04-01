@@ -1,97 +1,98 @@
+
 <html>
-  <head>
+<head>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
 
     <script>
-      var track = false; // Set tracking to false by default
-      var startX, startY, endX, endY;
+    var track = false; // Set tracking to false by default
+    var startX, startY, endX, endY;
 
-      function trackon() {
+    function trackon() {
         track = true;
         alert("Tracking is now on.");
-      }
+    }
 
-      function trackoff() {
+    function trackoff() {
         track = false;
         startX = null;
         startY = null;
         endX = null;
         endY = null;
         clearLine();
-      }
+    }
 
-      function trackit(event) {
+    function trackit(event) {
         if (track && event.buttons === 1) { // Check if the left mouse button is pressed
-          $('#valx').remove();
-          $('#valy').remove();
-          var svg = document.getElementById('table');
-          var point = svg.createSVGPoint();
-          point.x = event.clientX;
-          point.y = event.clientY;
-          var ctm = svg.getScreenCTM();
-          var svgPoint = point.matrixTransform(ctm.inverse());
+        $('#valx').remove();
+        $('#valy').remove();
+        var svg = document.getElementById('table');
+        var point = svg.createSVGPoint();
+        point.x = event.clientX;
+        point.y = event.clientY;
+        var ctm = svg.getScreenCTM();
+        var svgPoint = point.matrixTransform(ctm.inverse());
 
-          $('<div id="valx">' + svgPoint.x + '</div>').appendTo("#x");
-          $('<div id="valy">' + svgPoint.y + '</div>').appendTo("#y");
+        $('<div id="valx">' + svgPoint.x + '</div>').appendTo("#x");
+        $('<div id="valy">' + svgPoint.y + '</div>').appendTo("#y");
 
-          if (startX && startY) {
+        if (startX && startY) {
             endX = svgPoint.x;
             endY = svgPoint.y;
             drawLine(startX, startY, endX, endY, true);
-          }
         }
-      }
+        }
+    }
 
-      function drawLine(startX, startY, endX, endY, visible) {
+    function drawLine(startX, startY, endX, endY, visible) {
         var svgNS = "http://www.w3.org/2000/svg";
         var svg = document.getElementById('table');
         var line = svg.querySelector('line');
         if (!line) {
-          line = document.createElementNS(svgNS, 'line');
-          line.setAttribute('stroke', 'black');
-          line.setAttribute('stroke-width', '5'); // Increased line width
-          svg.appendChild(line);
+        line = document.createElementNS(svgNS, 'line');
+        line.setAttribute('stroke', 'black');
+        line.setAttribute('stroke-width', '5'); // Increased line width
+        svg.appendChild(line);
         }
         line.setAttribute('x1', startX);
         line.setAttribute('y1', startY);
         line.setAttribute('x2', endX);
         line.setAttribute('y2', endY);
         line.style.display = visible ? 'inline' : 'none'; // Set line visibility
-      }
+    }
 
-      function clearLine() {
+    function clearLine() {
         var svg = document.getElementById('table');
         var line = svg.querySelector('line');
         if (line) {
-          line.parentNode.removeChild(line);
+        line.parentNode.removeChild(line);
         }
-      }
+    }
 
-      function startDrawing(event) {
+    function startDrawing(event) {
         var target = event.target;
         if (target.tagName === 'circle' && target.getAttribute('fill') === 'WHITE') {
-          var svg = document.getElementById('table');
-          var point = svg.createSVGPoint();
-          point.x = event.clientX;
-          point.y = event.clientY;
-          var ctm = svg.getScreenCTM();
-          var svgPoint = point.matrixTransform(ctm.inverse());
+        var svg = document.getElementById('table');
+        var point = svg.createSVGPoint();
+        point.x = event.clientX;
+        point.y = event.clientY;
+        var ctm = svg.getScreenCTM();
+        var svgPoint = point.matrixTransform(ctm.inverse());
 
-          startX = svgPoint.x;
-          startY = svgPoint.y;
+        startX = svgPoint.x;
+        startY = svgPoint.y;
         }
-      }
+    }
 
-      function showVelocities(initialXVelocity, initialYVelocity, accX, accY) {
-        alert("Initial X Velocity: " + initialXVelocity + "\nInitial Y Velocity: " + initialYVelocity + "\nAcceleration X: " + accX + "\nAcceleration Y: " + accY);
+    function showVelocities(initialXVelocity, initialYVelocity, accX, accY) {
+        alert("Initial X Velocity: " + initialXVelocity + "Initial Y Velocity: " + initialYVelocity + "Acceleration X: " + accX + "Acceleration Y: " + accY);
         $('<div class="velocity-event">Initial X Velocity: ' + initialXVelocity + '</div>').appendTo("#events");
         $('<div class="velocity-event">Initial Y Velocity: ' + initialYVelocity + '</div>').appendTo("#events");
         $('<div class="velocity-event">Acceleration X: ' + accX + '</div>').appendTo("#events");
         $('<div class="velocity-event">Acceleration Y: ' + accY + '</div>').appendTo("#events");
         sendDataToServer(initialXVelocity, initialYVelocity, accX, accY);
-      }
+    }
 
-      function sendDataToServer(initialXVelocity, initialYVelocity, accelerationX, accelerationY) {
+    function sendDataToServer(initialXVelocity, initialYVelocity, accelerationX, accelerationY) {
         // Create an object containing the data to send
         console.log("Sending data to server...");
         // Create an object containing the data to send
@@ -119,23 +120,23 @@
                 console.error("Error sending data:", error);
             }
         });
-      }
+    }
 
-      function endDrawing(event) {
+    function endDrawing(event) {
         var target = event.target;
         if (target.tagName === 'circle' && target.getAttribute('fill') === 'WHITE' && startX && startY) {
-          trackit(event);
-          startX = null;
-          startY = null;
-          endX = null;
-          endY = null;
+        trackit(event);
+        startX = null;
+        startY = null;
+        endX = null;
+        endY = null;
 
-          trackit(event);
-          startX = null;
-          startY = null;
-          endX = null;
-          endY = null;
-          clearLine();
+        trackit(event);
+        startX = null;
+        startY = null;
+        endX = null;
+        endY = null;
+        clearLine();
         }
         clearLine();
         var diffX = endX - startX;
@@ -154,12 +155,13 @@
         var accY = -initialYVelocity / speed * DRAG;
 
         showVelocities(initialXVelocity, initialYVelocity, accX, accY);
-      }
+    }
 
     </script>
-  </head>
-  <body>
-    <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+</head>
+<body>
+    <div id = "overwrite">
+    <h2>Game Name: 23</h2><p>Player 1: 123e</p><p>Player 2: ewfr</p><?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
 "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
  <svg onmousemove="trackit(event);" onmousedown="startDrawing(event);" onmouseup="endDrawing(event);"id="table" width="700" height="1375" viewBox="-25 -25 1400 2750"
@@ -176,28 +178,30 @@ xmlns:xlink="http://www.w3.org/1999/xlink">
 <circle cx="1350" cy="1350" r="114" fill="black" />
 <circle cx="1350" cy="2700" r="114" fill="black" />
 <circle cx="675" cy="675" r="28" fill="YELLOW" />
-<circle cx="645" cy="623" r="28" fill="BLUE" />
-<circle cx="704" cy="621" r="28" fill="RED" />
-<circle cx="613" cy="571" r="28" fill="PURPLE" />
-<circle cx="735" cy="570" r="28" fill="ORANGE" />
+<circle cx="645" cy="621" r="28" fill="BLUE" />
+<circle cx="705" cy="621" r="28" fill="RED" />
+<circle cx="615" cy="569" r="28" fill="PURPLE" />
+<circle cx="735" cy="571" r="28" fill="ORANGE" />
 <circle cx="675" cy="571" r="28" fill="BLACK" />
-<circle cx="645" cy="521" r="28" fill="GREEN" />
-<circle cx="704" cy="522" r="28" fill="BROWN" />
-<circle cx="587" cy="519" r="28" fill="LIGHTYELLOW" />
+<circle cx="644" cy="522" r="28" fill="GREEN" />
+<circle cx="705" cy="522" r="28" fill="BROWN" />
+<circle cx="586" cy="517" r="28" fill="LIGHTYELLOW" />
 <circle cx="762" cy="517" r="28" fill="LIGHTBLUE" />
-<circle cx="675" cy="471" r="28" fill="PINK" />
-<circle cx="615" cy="470" r="28" fill="MEDIUMPURPLE" />
-<circle cx="737" cy="469" r="28" fill="LIGHTSALMON" />
-<circle cx="557" cy="469" r="28" fill="LIGHTGREEN" />
-<circle cx="793" cy="467" r="28" fill="SANDYBROWN" />
+<circle cx="675" cy="472" r="28" fill="PINK" />
+<circle cx="613" cy="468" r="28" fill="MEDIUMPURPLE" />
+<circle cx="735" cy="469" r="28" fill="LIGHTSALMON" />
+<circle cx="556" cy="467" r="28" fill="LIGHTGREEN" />
+<circle cx="791" cy="467" r="28" fill="SANDYBROWN" />
 <circle cx="675" cy="2025" r="28" fill="WHITE" />
 </svg>
 
+    </div>
 
     <button id="b1" onclick="trackon();">Start Drawing</button>
     <button id="b2" onclick="trackoff();">Stop Drawing</button>
     <div id="x">x=</div>
     <div id="y">y=</div>
 
-  </body>
+</body>
 </html>
+                
