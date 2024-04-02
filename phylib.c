@@ -372,20 +372,20 @@ void phylib_roll( phylib_object *new, phylib_object *old, double time ){
     //Set new ball acceleration
     new->obj.rolling_ball.acc = old->obj.rolling_ball.acc;
 
-    //new->obj.rolling_ball.number = old->obj.rolling_ball.number;
+    new->obj.rolling_ball.number = old->obj.rolling_ball.number;
 
     //printf("\n\nOld x velocity: %10.5lf and New x velocity: %10.5lf\n", old->obj.rolling_ball.vel.x ,new->obj.rolling_ball.vel.x);
     //printf("New position x: %10.5lf, New position y: %10.5lf\n", new->obj.rolling_ball.pos.x, new->obj.rolling_ball.pos.y);
     //printf("Acceleration x: %10.5lf\n" ,new->obj.rolling_ball.acc.x );
 
     //Set velocities and acceleration to zero if negative
-    if ((new->obj.rolling_ball.vel.x * old->obj.rolling_ball.vel.x) <= 0)
+    if ((new->obj.rolling_ball.vel.x * old->obj.rolling_ball.vel.x) <= 0.1)
     {
         new->obj.rolling_ball.vel.x = 0;
         new->obj.rolling_ball.acc.x = 0;
     }
     
-    if ((new->obj.rolling_ball.vel.y * old->obj.rolling_ball.vel.y) <= 0)
+    if ((new->obj.rolling_ball.vel.y * old->obj.rolling_ball.vel.y) <= 0.1)
     {
         //printf("\nVelocity y set to zero");
         new->obj.rolling_ball.vel.y = 0;
