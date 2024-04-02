@@ -727,12 +727,6 @@ class Game:
 
             if tabSegment is None:
                 print("left loop")
-
-                html_content += "</body>\n</html>"
-
-                #with open('animation.html', 'w') as output_file:
-                #   output_file.write(html_content)
-            
                 break
 
 

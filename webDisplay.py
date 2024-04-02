@@ -184,6 +184,10 @@ class MyHandler(BaseHTTPRequestHandler):
                 self.send_response(200)
                 self.send_header('Content-type', 'application/json')
                 self.end_headers()
+                if js_svg is None:
+                    print ("Hey im none")
+                else:
+                    print ("Hey I exist")
                 self.wfile.write(js_svg.encode('utf-8'))
 
             else:
@@ -307,6 +311,7 @@ xmlns:xlink="http://www.w3.org/1999/xlink">
     var track = false; // Set tracking to false by default
     var startX, startY, endX, endY;
     var svg;
+    var response;
 
     function trackon() {
         track = true;
@@ -389,6 +394,7 @@ xmlns:xlink="http://www.w3.org/1999/xlink">
         $('<div class="velocity-event">Initial X Velocity: ' + initialXVelocity + '</div>').appendTo("#events");
         $('<div class="velocity-event">Initial Y Velocity: ' + initialYVelocity + '</div>').appendTo("#events");
         sendDataToServer(initialXVelocity, initialYVelocity);
+        shoot()
     }
 
     function sendDataToServer(initialXVelocity, initialYVelocity) {
@@ -419,35 +425,44 @@ xmlns:xlink="http://www.w3.org/1999/xlink">
         });
     }
 
-    function getSvgAnimation() {
-        $.ajax({
-        type: "GET",
-        url: "/get_svg_anim",
-        success: function(response) {
-            // Update SVG contents in HTML dynamically
-            console.log('SVGs were received successfully:', response.js_svg);
-            animateContents(response.js_svg);
-        },
-        error: function(xhr, status, error) {
-            console.error("Error:", error);
-        }
-    });
+    function shoot() {
+        // Wait for 10 seconds before executing the shoot action
+        setTimeout(function() {
+            // Your shoot action here
+            console.log("Shoot action executed after 10 seconds");
+            getSvgAnimation()
+        }, 10000); // 10000 milliseconds = 10 seconds
     }
 
-    function animateContents(js_svg){
+    function getSvgAnimation() {
+        $.ajax({
+            type: "GET",
+            url: "/get_svg_anim",
+            success: function(response) {
+                // Update SVG contents in HTML dynamically
+                console.log('SVGs were received successfully:', response);
+                animateSvgs(response)
+            },
+            error: function(xhr, status, error) {
+                console.log ("We made it to the error")
+                console.error("Error:", error);
+            }
+        });
+    }
+
+    function animateSvgs(response){
         let currentIndex = 0;
         const interval = 10; // Interval between displaying SVGs in milliseconds
         const animationInterval = setInterval(() => {
-            if (currentIndex >= js_svg.length) {
+            if (currentIndex >= response.length) {
                 clearInterval(animationInterval);
                 return;
             }
 
-            document.getElementById('overwrite').innerHTML = js_svg[currentIndex];
+            document.getElementById("overwrite").innerHTML = response[currentIndex];
             currentIndex++;
         }, interval);
     }
-    
 
     function endDrawing(event) {
         var target = event.target;
@@ -476,15 +491,11 @@ xmlns:xlink="http://www.w3.org/1999/xlink">
         showVelocities(initialXVelocity, initialYVelocity);
     }
 
-    $(document).ready(function() {
-        getSvgAnimation();
-    });
-
     </script>
 </head>
 <body>
     <div id = "overwrite"></div>
-    ball_content
+    ball_content      
                       
     <button id="b1" onclick="trackon();">Start Drawing</button>
     <button id="b2" onclick="trackoff();">Stop Drawing</button>
@@ -492,7 +503,7 @@ xmlns:xlink="http://www.w3.org/1999/xlink">
     <div id="y">y=</div>
 
 </body>
-</html>                         
+</html>                          
                  '''
          
                 # Concatenate the HTML names with the SVG content
@@ -515,6 +526,7 @@ xmlns:xlink="http://www.w3.org/1999/xlink">
                 self.wfile.write(html_response.encode('utf-8'))         
 
             elif parsed_url.path == '/data':
+                global js_svg
                 # Parse the incoming JSON data
                 content_length = int(self.headers['Content-Length'])
                 post_data = self.rfile.read(content_length)
@@ -580,9 +592,7 @@ xmlns:xlink="http://www.w3.org/1999/xlink">
                 print("Game shot");
 
                # db = Physics.Database();
-
                # cur = db.conn.cursor();
-
                 # retreive all tables (regardless of shot)
                 cur.execute( """\
                 SELECT TABLEID FROM TableShot;""");
@@ -598,6 +608,12 @@ xmlns:xlink="http://www.w3.org/1999/xlink">
 
                 anim_content += "</body>\n</html>"
                 js_svg = json.dumps(svg_list)
+                #print("Serialized SVG list to JSON:", js_svg)
+
+                if (js_svg is None):
+                    print("Hola im none")
+                else:
+                    print("Im not none >;(")
 
                 with open('newAnim.html', 'w') as output_file:
                    output_file.write(anim_content)

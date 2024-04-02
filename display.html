@@ -7,6 +7,7 @@
     var track = false; // Set tracking to false by default
     var startX, startY, endX, endY;
     var svg;
+    var response;
 
     function trackon() {
         track = true;
@@ -88,9 +89,8 @@
         alert("Initial X Velocity: " + initialXVelocity + ", Initial Y Velocity: " + initialYVelocity);
         $('<div class="velocity-event">Initial X Velocity: ' + initialXVelocity + '</div>').appendTo("#events");
         $('<div class="velocity-event">Initial Y Velocity: ' + initialYVelocity + '</div>').appendTo("#events");
-        if (initialXVelocity !== null && initialYVelocity !== null){
-            sendDataToServer(initialXVelocity, initialYVelocity);
-        }
+        sendDataToServer(initialXVelocity, initialYVelocity);
+        shoot()
     }
 
     function sendDataToServer(initialXVelocity, initialYVelocity) {
@@ -121,35 +121,44 @@
         });
     }
 
-    function getSvgAnimation() {
-        $.ajax({
-        type: "GET",
-        url: "/get_svg_anim",
-        success: function(response) {
-            // Update SVG contents in HTML dynamically
-            console.log('SVGs were received successfully:', response.js_svg);
-            animateContents(response.js_svg);
-        },
-        error: function(xhr, status, error) {
-            console.error("Error:", error);
-        }
-    });
+    function shoot() {
+        // Wait for 10 seconds before executing the shoot action
+        setTimeout(function() {
+            // Your shoot action here
+            console.log("Shoot action executed after 10 seconds");
+            getSvgAnimation()
+        }, 10000); // 10000 milliseconds = 10 seconds
     }
 
-    function animateContents(js_svg){
+    function getSvgAnimation() {
+        $.ajax({
+            type: "GET",
+            url: "/get_svg_anim",
+            success: function(response) {
+                // Update SVG contents in HTML dynamically
+                console.log('SVGs were received successfully:', response);
+                animateSvgs(response)
+            },
+            error: function(xhr, status, error) {
+                console.log ("We made it to the error")
+                console.error("Error:", error);
+            }
+        });
+    }
+
+    function animateSvgs(response){
         let currentIndex = 0;
         const interval = 10; // Interval between displaying SVGs in milliseconds
         const animationInterval = setInterval(() => {
-            if (currentIndex >= js_svg.length) {
+            if (currentIndex >= response.length) {
                 clearInterval(animationInterval);
                 return;
             }
 
-            document.getElementById('overwrite').innerHTML = js_svg[currentIndex];
+            document.getElementById("overwrite").innerHTML = response[currentIndex];
             currentIndex++;
         }, interval);
     }
-    
 
     function endDrawing(event) {
         var target = event.target;
@@ -178,15 +187,11 @@
         showVelocities(initialXVelocity, initialYVelocity);
     }
 
-    $(document).ready(function() {
-        getSvgAnimation();
-    });
-
     </script>
 </head>
 <body>
     <div id = "overwrite"></div>
-    <h2>Game Name: sd</h2><p>Player 1: ds</p><p>Player 2: sd</p>
+    <h2>Game Name: wqr</h2><p>Player 1: ewr</p><p>Player 2: rew</p>
                 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
 "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
  <svg onmousemove="trackit(event);" onmousedown="startDrawing(event);" onmouseup="endDrawing(event);"id="table" width="700" height="1375" viewBox="-25 -25 1400 2750"
@@ -219,7 +224,7 @@ xmlns:xlink="http://www.w3.org/1999/xlink">
 <circle cx="800" cy="465" r="28" fill="SANDYBROWN" />
 <circle cx="676" cy="2025" r="28" fill="WHITE" />
 </svg>
-                
+                      
                       
     <button id="b1" onclick="trackon();">Start Drawing</button>
     <button id="b2" onclick="trackoff();">Stop Drawing</button>
@@ -227,5 +232,5 @@ xmlns:xlink="http://www.w3.org/1999/xlink">
     <div id="y">y=</div>
 
 </body>
-</html>                         
+</html>                          
                  
