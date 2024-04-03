@@ -16,6 +16,255 @@ js_svg = None
 # Subclass BaseHTTPRequestHandler to handle GET and POST requests
 class MyHandler(BaseHTTPRequestHandler):
 
+    def draw_table(self, table_svg):
+        #paste og html content CHANGE
+                html_content = table_svg
+                    
+                html_content = html_content.replace("<svg width", ' <svg id="table" width')
+                html_content = html_content.replace("<svg ", '<svg onmousemove="trackit(event);" onmousedown="startDrawing(event);" onmouseup="endDrawing(event);"')
+
+                html_response = '''
+<html>
+<head>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
+
+    <script>
+    var track = false; // Set tracking to false by default
+    var startX, startY, endX, endY;
+    var svg;
+    var response;
+    var duplicatedStr;
+
+    function trackon() {
+        track = true;
+        alert("Tracking is now on.");
+    }
+
+    function trackoff() {
+        track = false;
+        startX = null;
+        startY = null;
+        endX = null;
+        endY = null;
+        clearLine();
+    }
+
+    function trackit(event) {
+        if (track && event.buttons === 1) { // Check if the left mouse button is pressed
+        $('#valx').remove();
+        $('#valy').remove();
+        var svg = document.getElementById('table');
+        var point = svg.createSVGPoint();
+        point.x = event.clientX;
+        point.y = event.clientY;
+        var ctm = svg.getScreenCTM();
+        var svgPoint = point.matrixTransform(ctm.inverse());
+
+        $('<div id="valx">' + svgPoint.x + '</div>').appendTo("#x");
+        $('<div id="valy">' + svgPoint.y + '</div>').appendTo("#y");
+
+        if (startX && startY) {
+            endX = svgPoint.x;
+            endY = svgPoint.y;
+            drawLine(startX, startY, endX, endY, true);
+        }
+        }
+    }
+
+    function drawLine(startX, startY, endX, endY, visible) {
+        var svgNS = "http://www.w3.org/2000/svg";
+        var svg = document.getElementById('table');
+        var line = svg.querySelector('line');
+        if (!line) {
+        line = document.createElementNS(svgNS, 'line');
+        line.setAttribute('stroke', 'black');
+        line.setAttribute('stroke-width', '5'); // Increased line width
+        svg.appendChild(line);
+        }
+        line.setAttribute('x1', startX);
+        line.setAttribute('y1', startY);
+        line.setAttribute('x2', endX);
+        line.setAttribute('y2', endY);
+        line.style.display = visible ? 'inline' : 'none'; // Set line visibility
+    }
+
+    function clearLine() {
+        var svg = document.getElementById('table');
+        var line = svg.querySelector('line');
+        if (line) {
+        line.parentNode.removeChild(line);
+        }
+    }
+
+    function startDrawing(event) {
+        var target = event.target;
+        if (target.tagName === 'circle' && target.getAttribute('fill') === 'WHITE') {
+        var svg = document.getElementById('table');
+        var point = svg.createSVGPoint();
+        point.x = event.clientX;
+        point.y = event.clientY;
+        var ctm = svg.getScreenCTM();
+        var svgPoint = point.matrixTransform(ctm.inverse());
+
+        startX = svgPoint.x;
+        startY = svgPoint.y;
+        }
+    }
+
+    function showVelocities(initialXVelocity, initialYVelocity) {
+        alert("Initial X Velocity: " + initialXVelocity + ", Initial Y Velocity: " + initialYVelocity);
+        $('<div class="velocity-event">Initial X Velocity: ' + initialXVelocity + '</div>').appendTo("#events");
+        $('<div class="velocity-event">Initial Y Velocity: ' + initialYVelocity + '</div>').appendTo("#events");
+        sendDataToServer(initialXVelocity, initialYVelocity);
+        shoot()
+    }
+
+    function sendDataToServer(initialXVelocity, initialYVelocity) {
+        // Create an object containing the data to send
+        console.log("Sending data to server...");
+        // Create an object containing the data to send
+        var data = {
+            initialXVelocity: initialXVelocity,
+            initialYVelocity: initialYVelocity,
+        };
+
+        console.log("Data:", data);
+
+        // Send an AJAX POST request to the server
+        $.ajax({
+            type: "POST",
+            url: "/data",  // Update this URL with the appropriate endpoint on your server
+            data: JSON.stringify(data),
+            contentType: "application/json",
+            success: function(response) {
+                // Handle successful response from the server if needed
+                console.log("Data sent successfully:", response);
+            },
+            error: function(xhr, status, error) {
+                // Handle errors if any
+                console.error("Error sending data:", error);
+            }
+        });
+    }
+
+    function shoot() {
+        // Wait for 10 seconds before executing the shoot action
+        setTimeout(function() {
+            // Your shoot action here
+            console.log("Shoot action executed after 20 seconds");
+            getSvgAnimation()
+        }, 20000); // 10000 milliseconds = 10 seconds
+    }
+
+    function getSvgAnimation() {
+        $.ajax({
+            type: "GET",
+            url: "/get_svg_anim",
+            success: function(response) {
+                // Update SVG contents in HTML dynamically
+                console.log('SVGs were received successfully:', response);
+                animateSvgs(response)
+            },
+            error: function(xhr, status, error) {
+                console.log ("We made it to the error")
+                console.error("Error:", error);
+            }
+        });
+    }
+
+    function animateSvgs(response){
+        let currentIndex = 0;
+        const interval = 10; // Interval between displaying SVGs in milliseconds
+        const animationInterval = setInterval(() => {
+            if (currentIndex >= response.length) {
+                clearInterval(animationInterval);
+                return;
+            }
+
+            document.getElementById("overwrite").innerHTML = response[currentIndex];
+            currentIndex++;
+
+        }, interval);
+    
+    sendAnimToServer();
+    }
+
+    function sendAnimToServer() {
+        // Create an object containing the data to send
+        console.log("Sending anim back to server...");
+
+        // Send an AJAX POST request to the server
+        $.ajax({
+            type: "POST",
+            url: "/anim_return",  
+            success: function(response) {
+                // Handle successful response from the server if needed
+                console.log("svg sent successfully:", response);
+            },
+            error: function(xhr, status, error) {
+                // Handle errors if any
+                console.error("Error sending data:", error);
+            }
+        });
+    }
+
+    function endDrawing(event) {
+        var target = event.target;
+        if (target.tagName === 'circle' && target.getAttribute('fill') === 'WHITE' && startX && startY) {
+        trackit(event);
+        startX = null;
+        startY = null;
+        endX = null;
+        endY = null;
+
+        trackit(event);
+        startX = null;
+        startY = null;
+        endX = null;
+        endY = null;
+        clearLine();
+        }
+        clearLine();
+        var diffX = endX - startX;
+        var diffY = endY - startY;
+
+        // Calculate initial x and y velocities
+        var initialXVelocity = diffX;
+        var initialYVelocity = diffY;
+
+        showVelocities(initialXVelocity, initialYVelocity);
+    }
+    </script>
+</head>
+<body>
+    <div id = "overwrite">
+        ball_content      
+    </div>
+                     
+    <button id="b1" onclick="trackon();">Start Drawing</button>
+    <button id="b2" onclick="trackoff();">Stop Drawing</button>
+    <div id="x">x=</div>
+    <div id="y">y=</div>
+
+</body>
+</html>                          
+                 '''
+
+                # Replace the placeholder with the SVG content in the HTML response
+                html_response = html_response.replace("ball_content", html_content)
+                # Write the modified HTML response back to the file
+                with open('display.html', 'w') as output_file:
+                    output_file.write(html_response)
+                
+                self.send_response(302)
+                self.send_header('Location', '/display.html')
+                self.end_headers()
+                # Send the HTML response with 200 OK status
+                self.send_response(200)
+                self.send_header('Content-type', 'text/html')
+                self.end_headers()
+                self.wfile.write(html_response.encode('utf-8'))  
+
     def add_balls(self, table):
 
         nudge = lambda: random.uniform(-1.5, 1.5)
@@ -232,64 +481,9 @@ class MyHandler(BaseHTTPRequestHandler):
                 # Concatenate the game name and player names into HTML format
                 html_names = ''
                 html_names = f'<h2>Game Name: {game_name}</h2>'
-                html_names += f'<p>Player 1: {player1}</p>'
-                html_names += f'<p>Player 2: {player2}</p>'
-
-                #table = Table()
-                #self.add_balls(table)
-                
-                db = Physics.Database( reset=True );
-                db.createDB();
-
-                #paste og html content CHANGE
-                html_content = '''
-                <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
-"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg width="700" height="1375" viewBox="-25 -25 1400 2750"
-xmlns="http://www.w3.org/2000/svg"
-xmlns:xlink="http://www.w3.org/1999/xlink">
-<rect width="1350" height="2700" x="0" y="0" fill="#C0D0C0" /><rect width="1400" height="25" x="-25" y="-25" fill="darkgreen" />
-<rect width="1400" height="25" x="-25" y="2700" fill="darkgreen" />
- <rect width="25" height="2750" x="-25" y="-25" fill="darkgreen" />
- <rect width="25" height="2750" x="1350" y="-25" fill="darkgreen" />
-<circle cx="0" cy="0" r="114" fill="black" />
-<circle cx="0" cy="1350" r="114" fill="black" />
-<circle cx="0" cy="2700" r="114" fill="black" />
-<circle cx="1350" cy="0" r="114" fill="black" />
-<circle cx="1350" cy="1350" r="114" fill="black" />
-<circle cx="1350" cy="2700" r="114" fill="black" />
-<circle cx="675" cy="675" r="28" fill="YELLOW" />
-<circle cx="640" cy="623" r="28" fill="BLUE" />
-<circle cx="707" cy="621" r="28" fill="RED" />
-<circle cx="612" cy="572" r="28" fill="PURPLE" />
-<circle cx="735" cy="570" r="28" fill="ORANGE" />
-<circle cx="675" cy="568" r="28" fill="BLACK" />
-<circle cx="638" cy="518" r="28" fill="GREEN" />
-<circle cx="710" cy="517" r="28" fill="BROWN" />
-<circle cx="579" cy="519" r="28" fill="LIGHTYELLOW" />
-<circle cx="771" cy="519" r="28" fill="LIGHTBLUE" />
-<circle cx="675" cy="463" r="28" fill="PINK" />
-<circle cx="610" cy="464" r="28" fill="MEDIUMPURPLE" />
-<circle cx="738" cy="464" r="28" fill="LIGHTSALMON" />
-<circle cx="549" cy="464" r="28" fill="LIGHTGREEN" />
-<circle cx="800" cy="465" r="28" fill="SANDYBROWN" />
-<circle cx="676" cy="2025" r="28" fill="WHITE" />
-</svg>
-                '''
-                    
-                html_content = html_content.replace("<svg width", ' <svg id="table" width')
-                html_content = html_content.replace("<svg ", '<svg onmousemove="trackit(event);" onmousedown="startDrawing(event);" onmouseup="endDrawing(event);"')
-                    
-                # Create file name for the SVG
-                file_name = "table.svg"
-
-                # Write SVG content to file
-                with open(file_name, "w") as svg_file:
-                    svg_file.write(html_content)
-
-                    # Move to the next segment
-                    #CHANGE maybe
-                #current_table_id = db.writeTable( table );
+                html_names += f'<p>Player 1: {player1} - HIGH</p>'
+                html_names += f'<p>Player 2: {player2} - LOW</p>'
+                html_names += f'<h2>PLAYER TURN: {player1}\'s turn - HIGH</h2>'
 
                 game = Physics.Game( gameName=game_name, player1Name=player1, player2Name=player2 );
                 current_game_id = game.gameID
@@ -298,232 +492,95 @@ xmlns:xlink="http://www.w3.org/1999/xlink">
                 #db.writeGame(0, game_name, player1, player2)
                 print("Game created");
 
-                # Read the content of the HTML template file
-                #with open('display.html', 'r') as template_file:
-                #    html_response = template_file.read()
+                table = Table()
+                self.add_balls(table)
+                #paste og html content CHANGE
+                html_content = html_names
+                html_content += table.svg()                
+                self.draw_table(html_content)
 
-                html_response = '''
-<html>
-<head>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
+            elif parsed_url.path == '/anim_return':
+                 #Modifiyyyyy
+                print("The anim has returned");
 
-    <script>
-    var track = false; // Set tracking to false by default
-    var startX, startY, endX, endY;
-    var svg;
-    var response;
+                db = Physics.Database();
+                cur = db.conn.cursor();
 
-    function trackon() {
-        track = true;
-        alert("Tracking is now on.");
-    }
+                cur.execute("SELECT TABLEID FROM TableShot ORDER BY TABLEID DESC LIMIT 1;")
+                last_table_id = cur.fetchone()
+                print("Last table id2: ", last_table_id[0])
 
-    function trackoff() {
-        track = false;
-        startX = null;
-        startY = null;
-        endX = null;
-        endY = null;
-        clearLine();
-    }
+                table = db.readTable(last_table_id[0])
 
-    function trackit(event) {
-        if (track && event.buttons === 1) { // Check if the left mouse button is pressed
-        $('#valx').remove();
-        $('#valy').remove();
-        var svg = document.getElementById('table');
-        var point = svg.createSVGPoint();
-        point.x = event.clientX;
-        point.y = event.clientY;
-        var ctm = svg.getScreenCTM();
-        var svgPoint = point.matrixTransform(ctm.inverse());
-
-        $('<div id="valx">' + svgPoint.x + '</div>').appendTo("#x");
-        $('<div id="valy">' + svgPoint.y + '</div>').appendTo("#y");
-
-        if (startX && startY) {
-            endX = svgPoint.x;
-            endY = svgPoint.y;
-            drawLine(startX, startY, endX, endY, true);
-        }
-        }
-    }
-
-    function drawLine(startX, startY, endX, endY, visible) {
-        var svgNS = "http://www.w3.org/2000/svg";
-        var svg = document.getElementById('table');
-        var line = svg.querySelector('line');
-        if (!line) {
-        line = document.createElementNS(svgNS, 'line');
-        line.setAttribute('stroke', 'black');
-        line.setAttribute('stroke-width', '5'); // Increased line width
-        svg.appendChild(line);
-        }
-        line.setAttribute('x1', startX);
-        line.setAttribute('y1', startY);
-        line.setAttribute('x2', endX);
-        line.setAttribute('y2', endY);
-        line.style.display = visible ? 'inline' : 'none'; // Set line visibility
-    }
-
-    function clearLine() {
-        var svg = document.getElementById('table');
-        var line = svg.querySelector('line');
-        if (line) {
-        line.parentNode.removeChild(line);
-        }
-    }
-
-    function startDrawing(event) {
-        var target = event.target;
-        if (target.tagName === 'circle' && target.getAttribute('fill') === 'WHITE') {
-        var svg = document.getElementById('table');
-        var point = svg.createSVGPoint();
-        point.x = event.clientX;
-        point.y = event.clientY;
-        var ctm = svg.getScreenCTM();
-        var svgPoint = point.matrixTransform(ctm.inverse());
-
-        startX = svgPoint.x;
-        startY = svgPoint.y;
-        }
-    }
-
-    function showVelocities(initialXVelocity, initialYVelocity) {
-        alert("Initial X Velocity: " + initialXVelocity + ", Initial Y Velocity: " + initialYVelocity);
-        $('<div class="velocity-event">Initial X Velocity: ' + initialXVelocity + '</div>').appendTo("#events");
-        $('<div class="velocity-event">Initial Y Velocity: ' + initialYVelocity + '</div>').appendTo("#events");
-        sendDataToServer(initialXVelocity, initialYVelocity);
-        shoot()
-    }
-
-    function sendDataToServer(initialXVelocity, initialYVelocity) {
-        // Create an object containing the data to send
-        console.log("Sending data to server...");
-        // Create an object containing the data to send
-        var data = {
-            initialXVelocity: initialXVelocity,
-            initialYVelocity: initialYVelocity,
-        };
-
-        console.log("Data:", data);
-
-        // Send an AJAX POST request to the server
-        $.ajax({
-            type: "POST",
-            url: "/data",  // Update this URL with the appropriate endpoint on your server
-            data: JSON.stringify(data),
-            contentType: "application/json",
-            success: function(response) {
-                // Handle successful response from the server if needed
-                console.log("Data sent successfully:", response);
-            },
-            error: function(xhr, status, error) {
-                // Handle errors if any
-                console.error("Error sending data:", error);
-            }
-        });
-    }
-
-    function shoot() {
-        // Wait for 10 seconds before executing the shoot action
-        setTimeout(function() {
-            // Your shoot action here
-            console.log("Shoot action executed after 10 seconds");
-            getSvgAnimation()
-        }, 10000); // 10000 milliseconds = 10 seconds
-    }
-
-    function getSvgAnimation() {
-        $.ajax({
-            type: "GET",
-            url: "/get_svg_anim",
-            success: function(response) {
-                // Update SVG contents in HTML dynamically
-                console.log('SVGs were received successfully:', response);
-                animateSvgs(response)
-            },
-            error: function(xhr, status, error) {
-                console.log ("We made it to the error")
-                console.error("Error:", error);
-            }
-        });
-    }
-
-    function animateSvgs(response){
-        let currentIndex = 0;
-        const interval = 10; // Interval between displaying SVGs in milliseconds
-        const animationInterval = setInterval(() => {
-            if (currentIndex >= response.length) {
-                clearInterval(animationInterval);
-                return;
-            }
-
-            document.getElementById("overwrite").innerHTML = response[currentIndex];
-            currentIndex++;
-        }, interval);
-    }
-
-    function endDrawing(event) {
-        var target = event.target;
-        if (target.tagName === 'circle' && target.getAttribute('fill') === 'WHITE' && startX && startY) {
-        trackit(event);
-        startX = null;
-        startY = null;
-        endX = null;
-        endY = null;
-
-        trackit(event);
-        startX = null;
-        startY = null;
-        endX = null;
-        endY = null;
-        clearLine();
-        }
-        clearLine();
-        var diffX = endX - startX;
-        var diffY = endY - startY;
-
-        // Calculate initial x and y velocities
-        var initialXVelocity = diffX;
-        var initialYVelocity = diffY;
-
-        showVelocities(initialXVelocity, initialYVelocity);
-    }
-
-    </script>
-</head>
-<body>
-    <div id = "overwrite"></div>
-    ball_content      
-                      
-    <button id="b1" onclick="trackon();">Start Drawing</button>
-    <button id="b2" onclick="trackoff();">Stop Drawing</button>
-    <div id="x">x=</div>
-    <div id="y">y=</div>
-
-</body>
-</html>                          
-                 '''
-         
-                # Concatenate the HTML names with the SVG content
-                html_content_with_names = html_names + html_content
-
-                # Replace the placeholder with the SVG content in the HTML response
-                html_response = html_response.replace("ball_content", html_content_with_names)
-
-                # Write the modified HTML response back to the file
-                with open('display.html', 'w') as output_file:
-                    output_file.write(html_response)
+                cur.execute("SELECT SHOTID FROM TableShot ORDER BY TABLEID DESC LIMIT 1;")
+                shot_id = cur.fetchone()
+                print("Last shot id2: ", shot_id)
                 
-                self.send_response(302)
-                self.send_header('Location', '/display.html')
-                self.end_headers()
-                # Send the HTML response with 200 OK status
-                self.send_response(200)
-                self.send_header('Content-type', 'text/html')
-                self.end_headers()
-                self.wfile.write(html_response.encode('utf-8'))         
+                game_ID, game_name, player_name1, player_name2 = db.readGame(current_game_id - 1);
+
+                if (shot_id is None):
+                    shoot = 0
+                else:
+                    shoot = shot_id[0]
+
+                if (shoot % 2 == 0):
+                    player = player_name1
+                    player += '\'s turn - HIGH'
+                else:
+                    player = player_name2
+                    player += '\'s turn - LOW'
+
+                count1 = 0
+                count2 = 0
+                cue_ball_exists = 0;
+                
+                for ball in table:
+                    if isinstance(ball, RollingBall):
+                        # Check if the number is between or equal to 1 and 8
+                        if 1 <= ball.obj.rolling_ball.number <= 8:
+                            print("ENtered rolling player 1")
+                            count2 += 1;
+                        if 8 <= ball.obj.rolling_ball.number <= 15:
+                            print("ENtered rolling player 2")
+                            count1 += 1;
+                            # Perform action for rolling ball within the specified range
+                              # Replace with your action
+                        if ball.obj.rolling_ball.number == 0:
+                            cue_ball_exists = 1;
+
+                    elif isinstance(ball, StillBall):
+                        # Check if the number is between or equal to 8 and 15
+                        if 1 <= ball.obj.still_ball.number <= 8:
+                            print("ENtered still player 1")
+                            count2 += 1;
+                        if 8 <= ball.obj.still_ball.number <= 15:
+                            print("ENtered still player 2")
+                            count1 += 1;
+                        if ball.obj.still_ball.number == 0:
+                            cue_ball_exists = 1;
+                            # Perform action for still ball within the specified range 
+                
+                if (count1 == 0):
+                    html_content = f'<h2>Game Winner: {player_name1}</h2>'
+                    html_content += f'<p>Congrats on scoring all the high balls</p>'
+                    html_content += f'<p>{player_name2}, better luck next time</p>'
+                elif(count2 == 0):
+                    html_content = f'<h2>Game Winner: {player_name2}</h2>'
+                    html_content += f'<p>Congrats on scoring all the low balls</p>'
+                    html_content += f'<p>{player_name1}, better luck next time</p>'
+                else:
+                    html_content = ''
+                    html_content = f'<h2>Game Name: {game_name}</h2>'
+                    html_content += f'<p>Player 1: {player_name1} - HIGH</p>'
+                    html_content += f'<p>Player 2: {player_name2} - LOW</p>'
+                    html_content += f'<h2>PLAYER TURN: {player}</h2>' 
+
+                html_content += table.svg()
+
+                if (cue_ball_exists == 0):
+                    html_content = html_content.replace("</svg>", ' <circle cx="676" cy="2025" r="28" fill="WHITE" /> </svg>')
+
+                self.draw_table(html_content)
 
             elif parsed_url.path == '/data':
                 global js_svg
@@ -547,7 +604,7 @@ xmlns:xlink="http://www.w3.org/1999/xlink">
                 self.end_headers()
                 self.wfile.write(b'Data received successfully')
 
-                db = Physics.Database();
+                #db = Physics.Database();
                 #db.printDatabase
 
                 print("Current game Id2: ", current_game_id)
@@ -573,7 +630,7 @@ xmlns:xlink="http://www.w3.org/1999/xlink">
 
                 print("table read")
 
-                #game = Physics.Game( gameName="Game 01", player1Name="Stefan", player2Name="Efren Reyes" );
+                
                 game_ID, game_name, player_name1, player_name2 = db.readGame(current_game_id - 1);
 
                 print("Game ID:", game_ID)
@@ -584,9 +641,22 @@ xmlns:xlink="http://www.w3.org/1999/xlink">
                 print("game read")
 
                 game = Physics.Game( gameID=game_ID, gameName=game_name, player1Name=player_name1, player2Name=player_name2 );
-                print("create da game")
+                #print("create da game")
 
-                num_frame = game.shoot( game_name, player_name1, table, initial_x_velocity, initial_y_velocity);
+                cur.execute("SELECT SHOTID FROM TableShot ORDER BY TABLEID DESC LIMIT 1;")
+                shot_id = cur.fetchone()
+                print("Last shot id: ", shot_id)
+
+                if (shot_id is None):
+                    shoot = 0
+                else:
+                    shoot = shot_id[0]
+
+                if (shoot % 2 == 0):
+                    num_frame = game.shoot( game_name, player_name1, table, initial_x_velocity, initial_y_velocity);
+                else:
+                    num_frame = game.shoot( game_name, player_name2, table, initial_x_velocity, initial_y_velocity);
+
                 print("Num frames: ",num_frame)
 
                 print("Game shot");
@@ -598,15 +668,20 @@ xmlns:xlink="http://www.w3.org/1999/xlink">
                 SELECT TABLEID FROM TableShot;""");
                 tableIDs = cur.fetchall();
 
-                anim_content = "<html>\n<head>\n<title>Animation</title>\n</head>\n<body>\n"
+                #anim_content = "<html>\n<head>\n<title>Animation</title>\n</head>\n<body>\n"
                 svg_list = []
+                
+                if (last_table_id is None):
+                    min = 1
+                    max = num_frame
+                else:
+                    min = last_table_id[0]
+                    max = num_frame + last_table_id[0]
 
-                for i in range(1, num_frame ):
-                    anim_content += db.readTable(i).svg()
-                    #json.dumps(svg_list)
+                for i in range(min, max):
                     svg_list.append(db.readTable(i).svg())
 
-                anim_content += "</body>\n</html>"
+                #anim_content += "</body>\n</html>"
                 js_svg = json.dumps(svg_list)
                 #print("Serialized SVG list to JSON:", js_svg)
 
@@ -614,9 +689,6 @@ xmlns:xlink="http://www.w3.org/1999/xlink">
                     print("Hola im none")
                 else:
                     print("Im not none >;(")
-
-                with open('newAnim.html', 'w') as output_file:
-                   output_file.write(anim_content)
 
                 cur.close();
                 db.conn.commit();

@@ -772,9 +772,10 @@ class Game:
             table = tabSegment
             
             self.dBase.conn.commit()
+            
             num += num_frames
             # Get the next segment
-            print(num)
+            #print(num)
             
         # Finish the HTML content
         self.dBase.cursor.close()
