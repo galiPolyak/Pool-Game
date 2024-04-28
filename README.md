@@ -8,14 +8,14 @@ To compile the C code and create the necessary Python interface, follow these st
 1. Set the LD_LIBRARY_PATH:
    export LD_LIBRARY_PATH=`pwd`
 
-3. Compile the C code:
+2. Compile the C code:
    clang -Wall -pedantic -std=c99 -fPIC -c phylib.c -o phylib.o
    clang -shared -o libphylib.so phylib.o -lm
 
-5. Generate Python interface:
+3. Generate Python interface:
    swig -python phylib.i
 
-7. Compile the Python interface:
+4. Compile the Python interface:
    clang -Wall -pedantic -std=c99 -c phylib_wrap.c -I/usr/include/python3.11/ -fPIC -o phylib_wrap.o
    clang -Wall -pedantic -std=c99 -shared phylib_wrap.o -L. -L/usr/lib/python3.11 -lpython3.11 -lphylib -o _phylib.so
 
@@ -25,11 +25,11 @@ Ensure to replace /usr/include/python3.11/ and /usr/lib/python3.11 with the corr
 1. Start the Server:
    python server.py
 
-3. Run the Web Display:
+2. Run the Web Display:
    python3 webDisplay.py <port>
    Replace <port> with the desired port number.
    
-5. Open the HTML file in a web browser:
+3. Open the HTML file in a web browser:
    Open the file in a browser using the following URL format:
    http://localhost:<port>/playerId.html
    Replace <port> with the port number specified when running webDisplay.py.
