@@ -112,11 +112,22 @@ class MyHandler(BaseHTTPRequestHandler):
     }
 
     function showVelocities(initialXVelocity, initialYVelocity) {
-        alert("Initial X Velocity: " + initialXVelocity + ", Initial Y Velocity: " + initialYVelocity);
-        $('<div class="velocity-event">Initial X Velocity: ' + initialXVelocity + '</div>').appendTo("#events");
-        $('<div class="velocity-event">Initial Y Velocity: ' + initialYVelocity + '</div>').appendTo("#events");
-        sendDataToServer(initialXVelocity, initialYVelocity);
-        shoot()
+        if (!initialXVelocity || !initialYVelocity) {
+            // If velocities are not valid, inform the user and prompt to redraw
+            console.log("Initial velocities are zero or undefined. Please redraw.");
+            alert("Initial velocities are zero or undefined. Please redraw.");
+
+            // Prompt user to redraw the line
+            trackon();
+            return; // Exit the function
+        }
+        else{
+            alert("Initial X Velocity: " + initialXVelocity + ", Initial Y Velocity: " + initialYVelocity);
+            $('<div class="velocity-event">Initial X Velocity: ' + initialXVelocity + '</div>').appendTo("#events");
+            $('<div class="velocity-event">Initial Y Velocity: ' + initialYVelocity + '</div>').appendTo("#events");
+            sendDataToServer(initialXVelocity, initialYVelocity);
+            shoot()
+        }
     }
 
     function sendDataToServer(initialXVelocity, initialYVelocity) {
@@ -151,9 +162,9 @@ class MyHandler(BaseHTTPRequestHandler):
         // Wait for 10 seconds before executing the shoot action
         setTimeout(function() {
             // Your shoot action here
-            console.log("Shoot action executed after 20 seconds");
+            console.log("Shoot action executed after 10 seconds");
             getSvgAnimation()
-        }, 20000); // 10000 milliseconds = 10 seconds
+        }, 10000); // 10000 milliseconds = 10 seconds
     }
 
     function getSvgAnimation() {
@@ -161,13 +172,21 @@ class MyHandler(BaseHTTPRequestHandler):
             type: "GET",
             url: "/get_svg_anim",
             success: function(response) {
-                // Update SVG contents in HTML dynamically
-                console.log('SVGs were received successfully:', response);
-                animateSvgs(response)
+                // Check if the response is not empty and is an array of SVGs
+                if (response && Array.isArray(response) && response.length > 0) {
+                    console.log('SVGs were received successfully:', response);
+                    animateSvgs(response);
+                } else {
+                    // If the response is empty or not as expected, retry fetching after 1 second
+                    console.log("Received empty or invalid response. Retrying in 1 second...");
+                    setTimeout(getSvgAnimation, 1000); // Retry after 1 second
+                }
             },
             error: function(xhr, status, error) {
-                console.log ("We made it to the error")
                 console.error("Error:", error);
+                // If there's an error, retry fetching after 1 second
+                console.log("Error occurred. Retrying in 1 second...");
+                setTimeout(getSvgAnimation, 1000); // Retry after 1 second
             }
         });
     }
@@ -235,6 +254,11 @@ class MyHandler(BaseHTTPRequestHandler):
         showVelocities(initialXVelocity, initialYVelocity);
     }
     </script>
+    <style>
+        body {
+            background-color: lightpink;
+        }
+    </style>
 </head>
 <body>
     <div id = "overwrite">
@@ -371,7 +395,7 @@ class MyHandler(BaseHTTPRequestHandler):
         )
         sb15 = Physics.StillBall(15, pos15)
         table += sb15
-
+        
         pos0 = Physics.Coordinate(Physics.TABLE_WIDTH / 2.0 + random.uniform(-3.0, 3.0),
                                             Physics.TABLE_LENGTH - Physics.TABLE_WIDTH / 2.0)
         sb0 = Physics.StillBall(0, pos0)
