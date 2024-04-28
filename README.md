@@ -6,33 +6,33 @@ This project is a pool game that utilizes physics to calculate ball movements an
 To compile the C code and create the necessary Python interface, follow these steps:
 
 1. Set the LD_LIBRARY_PATH:
-   export LD_LIBRARY_PATH=`pwd`
+   export LD_LIBRARY_PATH=`pwd` <br />
 
 2. Compile the C code:
-   clang -Wall -pedantic -std=c99 -fPIC -c phylib.c -o phylib.o
-   clang -shared -o libphylib.so phylib.o -lm
+   clang -Wall -pedantic -std=c99 -fPIC -c phylib.c -o phylib.o <br />
+   clang -shared -o libphylib.so phylib.o -lm <br />
 
 3. Generate Python interface:
-   swig -python phylib.i
+   swig -python phylib.i <br />
 
 4. Compile the Python interface:
-   clang -Wall -pedantic -std=c99 -c phylib_wrap.c -I/usr/include/python3.11/ -fPIC -o phylib_wrap.o
-   clang -Wall -pedantic -std=c99 -shared phylib_wrap.o -L. -L/usr/lib/python3.11 -lpython3.11 -lphylib -o _phylib.so
+   clang -Wall -pedantic -std=c99 -c phylib_wrap.c -I/usr/include/python3.11/ -fPIC -o phylib_wrap.o <br />
+   clang -Wall -pedantic -std=c99 -shared phylib_wrap.o -L. -L/usr/lib/python3.11 -lpython3.11 -lphylib -o _phylib.so <br />
 
 Ensure to replace /usr/include/python3.11/ and /usr/lib/python3.11 with the correct paths to your Python installation if they are different.
 
 **Usage:**
-1. Start the Server:
-   python server.py
+1. Start the Server: 
+   python server.py <br />
 
 2. Run the Web Display:
-   python3 webDisplay.py <port>
-   Replace <port> with the desired port number.
+   python3 webDisplay.py <port> <br />
+   Replace <port> with the desired port number.<br />
    
 3. Open the HTML file in a web browser:
-   Open the file in a browser using the following URL format:
-   http://localhost:<port>/playerId.html
-   Replace <port> with the port number specified when running webDisplay.py.
+   Open the file in a browser using the following URL format:<br />
+   http://localhost:<port>/playerId.html <br />
+   Replace <port> with the port number specified when running webDisplay.py. <br />
 
 Dependencies:
 C Compiler: Clang (or any C compiler)
