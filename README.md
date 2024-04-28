@@ -6,33 +6,33 @@ This project is a pool game that utilizes physics to calculate ball movements an
 To compile the C code and create the necessary Python interface, follow these steps:
 
 1. Set the LD_LIBRARY_PATH:
-    export LD_LIBRARY_PATH=`pwd`
+   export LD_LIBRARY_PATH=`pwd`
 
-2. Compile the C code:
-    clang -Wall -pedantic -std=c99 -fPIC -c phylib.c -o phylib.o
-    clang -shared -o libphylib.so phylib.o -lm
+3. Compile the C code:
+   clang -Wall -pedantic -std=c99 -fPIC -c phylib.c -o phylib.o
+   clang -shared -o libphylib.so phylib.o -lm
 
-3. Generate Python interface:
-    swig -python phylib.i
+5. Generate Python interface:
+   swig -python phylib.i
 
-4. Compile the Python interface:
-    clang -Wall -pedantic -std=c99 -c phylib_wrap.c -I/usr/include/python3.11/ -fPIC -o phylib_wrap.o
-    clang -Wall -pedantic -std=c99 -shared phylib_wrap.o -L. -L/usr/lib/python3.11 -lpython3.11 -lphylib -o _phylib.so
+7. Compile the Python interface:
+   clang -Wall -pedantic -std=c99 -c phylib_wrap.c -I/usr/include/python3.11/ -fPIC -o phylib_wrap.o
+   clang -Wall -pedantic -std=c99 -shared phylib_wrap.o -L. -L/usr/lib/python3.11 -lpython3.11 -lphylib -o _phylib.so
 
 Ensure to replace /usr/include/python3.11/ and /usr/lib/python3.11 with the correct paths to your Python installation if they are different.
 
 **Usage:**
 1. Start the Server:
-    python server.py
+   python server.py
 
-2. Run the Web Display:
-    python3 webDisplay.py <port>
-    Replace <port> with the desired port number.
+3. Run the Web Display:
+   python3 webDisplay.py <port>
+   Replace <port> with the desired port number.
    
-3. Open the HTML file in a web browser:
-    Open the file in a browser using the following URL format:
-    http://localhost:<port>/playerId.html 
-    Replace <port> with the port number specified when running webDisplay.py.
+5. Open the HTML file in a web browser:
+   Open the file in a browser using the following URL format:
+   http://localhost:<port>/playerId.html
+   Replace <port> with the port number specified when running webDisplay.py.
 
 Dependencies:
 C Compiler: Clang (or any C compiler)
